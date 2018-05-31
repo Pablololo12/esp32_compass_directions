@@ -164,7 +164,7 @@ void create_service_device_info()
 
 void init()
 {
-	printf("Initializing BLE\n");
+	/*printf("Initializing BLE\n");
 	BLEDevice::init("ESP32 DISPLAY");
 	// Create the BLE Server
 	printf("Creating BLE Server\n");
@@ -174,7 +174,7 @@ void init()
 	create_service_device_info();
 	create_service_display();
 	// Start advertising
-	pServer->getAdvertising()->start();
+	pServer->getAdvertising()->start();*/
 
 	spi_conn = new SPI();
 	spi_conn->init();
@@ -240,15 +240,43 @@ void display_number_2(int number, int index)
 	matrix->setLed(0,index,true);
 }
 
-void display_heading(int heading, int index)
+void display_heading(float heading, int index)
 {
 	matrix->clearDisplay(0);
 	matrix->setLed(0,index,true);
+
+	matrix->setLed(4,3,true);
+
+	if(heading < 22.5 || heading > 360-22.5) { // N
+		matrix->setLed(3,3,true);
+		matrix->setLed(2,3,true);
+	} else if(heading > 22.5 && heading < 67.5) { // NW
+		matrix->setLed(3,4,true);
+		matrix->setLed(2,5,true);
+	} else if(heading > 67.5 && heading < 112.5) { // W
+		matrix->setLed(4,4,true);
+		matrix->setLed(4,5,true);
+	} else if(heading > 112.5 && heading < 157.5) { // SW
+		matrix->setLed(5,4,true);
+		matrix->setLed(6,5,true);
+	} else if(heading > 157.5 && heading < 202.5) { // S
+		matrix->setLed(5,3,true);
+		matrix->setLed(6,3,true);
+	} else if(heading > 202.5 && heading < 247.5) { // SE
+		matrix->setLed(5,2,true);
+		matrix->setLed(6,1,true);
+	} else if(heading > 247.5 && heading < 292.5) { // E
+		matrix->setLed(4,2,true);
+		matrix->setLed(4,1,true);
+	} else {
+		matrix->setLed(3,2,true);
+		matrix->setLed(2,1,true);
+	}
 }
 
 void ble_task(void *pvParameter)
 {
-	//init();
+	init();
 	/*uint32_t io_num;
 	bool refresh = true;
 	while(1) {
@@ -291,13 +319,14 @@ void ble_task(void *pvParameter)
 
 	init_compass();
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
-	check_compass_config();
+	//check_compass_config();
+	//vTaskDelay(1000 / portTICK_PERIOD_MS);
 
 	while(1) {
 		int16_t x,y,z;
 		read_compass_values(&x,&y,&z);
-		printf("%d %d %d\n", x,y,z);
-		/*float headinng = atan2(x,y);
+		//printf("%d %d %d\n", x,y,z);
+		float headinng = atan2(x,y);
 		// Correct for headinng < 0deg and headinng > 360deg
 		if (headinng < 0) {
 			headinng += 2 * M_PI;
@@ -306,8 +335,11 @@ void ble_task(void *pvParameter)
 			headinng -= 2 * M_PI;
 		}
 		headinng = headinng * 180/M_PI; 
-		printf("%f\n", headinng);*/
-		vTaskDelay(300 / portTICK_PERIOD_MS);
+		printf("%f\n", headinng);
+		display_heading(headinng,0);
+		//check_compass_config();
+		//read_dummy();
+		vTaskDelay(200 / portTICK_PERIOD_MS);
 	}
 }
 
