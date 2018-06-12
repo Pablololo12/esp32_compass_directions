@@ -78,8 +78,8 @@ static xQueueHandle gpio_evt_queue = NULL; // Queue to send button events
 // Interruption handler for buttons
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
-    uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+	uint32_t gpio_num = (uint32_t) arg;
+	xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
 
 class MyServerCallbacks: public BLEServerCallbacks {
@@ -95,33 +95,33 @@ class MyServerCallbacks: public BLEServerCallbacks {
 };
 
 class MyCallbackSPEED: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string aux_msj = pCharacteristic->getValue();
-      if (aux_msj.length() > 0) {
-      	speed = aux_msj.c_str()[0];
-      	toShowSpeed = true;
-      }
-    }
+	void onWrite(BLECharacteristic *pCharacteristic) {
+	  std::string aux_msj = pCharacteristic->getValue();
+	  if (aux_msj.length() > 0) {
+		speed = aux_msj.c_str()[0];
+		toShowSpeed = true;
+	  }
+	}
 };
 
 class MyCallbackHEADING: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string aux_msj = pCharacteristic->getValue();
-      if (aux_msj.length() > 0) {
-      	heading = aux_msj.c_str()[0];
-      	toShowHeading = true;
-      }
-    }
+	void onWrite(BLECharacteristic *pCharacteristic) {
+	  std::string aux_msj = pCharacteristic->getValue();
+	  if (aux_msj.length() > 0) {
+		heading = aux_msj.c_str()[0];
+		toShowHeading = true;
+	  }
+	}
 };
 
 class MyCallbackDISTANCE: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string aux_msj = pCharacteristic->getValue();
-      if (aux_msj.length() > 0) {
-      	distance = aux_msj.c_str()[0];
-      	toShowDistance = true;
-      }
-    }
+	void onWrite(BLECharacteristic *pCharacteristic) {
+	  std::string aux_msj = pCharacteristic->getValue();
+	  if (aux_msj.length() > 0) {
+		distance = aux_msj.c_str()[0];
+		toShowDistance = true;
+	  }
+	}
 };
 
 void create_service_display()
@@ -194,11 +194,11 @@ void init()
 	gpio_config(&io_conf);
 	gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));//Queue to handle events
 	//install gpio isr service
-    gpio_install_isr_service(0);
-    //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_NUM_19, gpio_isr_handler, (void*) GPIO_NUM_19);
-    //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_NUM_23, gpio_isr_handler, (void*) GPIO_NUM_23);
+	gpio_install_isr_service(0);
+	//hook isr handler for specific gpio pin
+	gpio_isr_handler_add(GPIO_NUM_19, gpio_isr_handler, (void*) GPIO_NUM_19);
+	//hook isr handler for specific gpio pin
+	gpio_isr_handler_add(GPIO_NUM_23, gpio_isr_handler, (void*) GPIO_NUM_23);
 
 	printf("Ready...\n");
 }
@@ -287,17 +287,17 @@ void ble_task(void *pvParameter)
 	bool refresh = true;
 	while(1) {
 		if(xQueueReceive(gpio_evt_queue, &io_num, 0)) {
-            if (io_num == GPIO_NUM_19) {
-            	state = state - 1;
-            	if (state < 0) state = 2;
-            	printf("%d\n", state);
-            	refresh = true;
-            } else if (io_num == GPIO_NUM_23) {
-            	printf("%d\n", state);
-            	state = (state + 1) % 3;
-            	refresh = true;
-            }
-        }
+			if (io_num == GPIO_NUM_19) {
+				state = state - 1;
+				if (state < 0) state = 2;
+				printf("%d\n", state);
+				refresh = true;
+			} else if (io_num == GPIO_NUM_23) {
+				printf("%d\n", state);
+				state = (state + 1) % 3;
+				refresh = true;
+			}
+		}
 		switch (state) {
 			case 0:
 				read_compass_values(&y,&x,&z);
@@ -337,7 +337,7 @@ void ble_task(void *pvParameter)
 				break;
 		}
 		xQueueReset(gpio_evt_queue);
-  		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(200 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -354,7 +354,7 @@ void app_main()
 	printf("silicon revision %d, ", chip_info.revision);
 
 	printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-			(chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+	   (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
 	xTaskCreate(&ble_task, "ble_task", 2048, NULL, 5, NULL);
 }
