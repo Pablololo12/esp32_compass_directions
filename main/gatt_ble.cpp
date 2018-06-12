@@ -164,7 +164,7 @@ void create_service_device_info()
 
 void init()
 {
-	/*printf("Initializing BLE\n");
+	printf("Initializing BLE\n");
 	BLEDevice::init("ESP32 DISPLAY");
 	// Create the BLE Server
 	printf("Creating BLE Server\n");
@@ -174,11 +174,14 @@ void init()
 	create_service_device_info();
 	create_service_display();
 	// Start advertising
-	pServer->getAdvertising()->start();*/
+	pServer->getAdvertising()->start();
 
 	spi_conn = new SPI();
 	spi_conn->init();
 	matrix = new MAX7219(spi_conn, 1);
+	vTaskDelay(100 / portTICK_PERIOD_MS);
+	matrix->shutdown(true);
+	vTaskDelay(100 / portTICK_PERIOD_MS);
 	matrix->shutdown(false);
 	matrix->setIntensity(4);
 	// Buttons
@@ -277,25 +280,46 @@ void display_heading(float heading, int index)
 void ble_task(void *pvParameter)
 {
 	init();
-	/*uint32_t io_num;
+	init_compass();
+	uint32_t io_num;
+	int16_t x,y,z;
+	float headinng;
 	bool refresh = true;
 	while(1) {
 		if(xQueueReceive(gpio_evt_queue, &io_num, 0)) {
             if (io_num == GPIO_NUM_19) {
-            	state = (state + 1) % 3;
+            	state = state - 1;
+            	if (state < 0) state = 2;
+            	printf("%d\n", state);
             	refresh = true;
             } else if (io_num == GPIO_NUM_23) {
+            	printf("%d\n", state);
             	state = (state + 1) % 3;
             	refresh = true;
             }
         }
 		switch (state) {
 			case 0:
-				if (toShowHeading || refresh) {
-					refresh = false;
-					toShowHeading = false;
-					display_heading(0,0);
+				read_compass_values(&y,&x,&z);
+				headinng = atan2(x,-y);
+				headinng += 6.161; // Declinación 7 grados este
+				// Correct for headinng < 0deg and headinng > 360deg
+				if (headinng < 0) {
+					headinng += 2 * M_PI;
 				}
+				if (headinng > 2 * M_PI) {
+					headinng -= 2 * M_PI;
+				}
+				headinng = headinng * 180/M_PI;
+				headinng = headinng - (heading*360)/256;
+				if (headinng < 0) {
+					headinng += 360;
+				}
+				if (headinng > 360) {
+					headinng -= 360;
+				}
+				printf("%f\n", headinng);
+				display_heading(headinng,0);
 				break;
 			case 1:
 				if (toShowDistance || refresh) {
@@ -312,34 +336,8 @@ void ble_task(void *pvParameter)
 				}
 				break;
 		}
-		
-  		vTaskDelay(100 / portTICK_PERIOD_MS);
-	}*/
-	// Currently testing i2c compass
-
-	init_compass();
-	vTaskDelay(2000 / portTICK_PERIOD_MS);
-	//check_compass_config();
-	//vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-	while(1) {
-		int16_t x,y,z;
-		read_compass_values(&x,&y,&z);
-		//printf("%d %d %d\n", x,y,z);
-		float headinng = atan2(x,y);
-		// Correct for headinng < 0deg and headinng > 360deg
-		if (headinng < 0) {
-			headinng += 2 * M_PI;
-		}
-		if (headinng > 2 * M_PI) {
-			headinng -= 2 * M_PI;
-		}
-		headinng = headinng * 180/M_PI; 
-		printf("%f\n", headinng);
-		display_heading(headinng,0);
-		//check_compass_config();
-		//read_dummy();
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		xQueueReset(gpio_evt_queue);
+  		vTaskDelay(200 / portTICK_PERIOD_MS);
 	}
 }
 
