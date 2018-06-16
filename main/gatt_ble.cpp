@@ -179,9 +179,9 @@ void init()
 	spi_conn = new SPI();
 	spi_conn->init();
 	matrix = new MAX7219(spi_conn, 1);
-	vTaskDelay(100 / portTICK_PERIOD_MS);
+	vTaskDelay(200 / portTICK_PERIOD_MS);
 	matrix->shutdown(true);
-	vTaskDelay(100 / portTICK_PERIOD_MS);
+	vTaskDelay(200 / portTICK_PERIOD_MS);
 	matrix->shutdown(false);
 	matrix->setIntensity(4);
 	// Buttons
@@ -287,21 +287,19 @@ void ble_task(void *pvParameter)
 	bool refresh = true;
 	while(1) {
 		if(xQueueReceive(gpio_evt_queue, &io_num, 0)) {
-			if (io_num == GPIO_NUM_19) {
+			if (io_num == GPIO_NUM_23) {
 				state = state - 1;
 				if (state < 0) state = 2;
-				printf("%d\n", state);
 				refresh = true;
-			} else if (io_num == GPIO_NUM_23) {
-				printf("%d\n", state);
+			} else if (io_num == GPIO_NUM_19) {
 				state = (state + 1) % 3;
 				refresh = true;
 			}
 		}
 		switch (state) {
 			case 0:
-				read_compass_values(&y,&x,&z);
-				headinng = atan2(x,-y);
+				read_compass_values(&x,&y,&z);
+				headinng = atan2(x,y);
 				headinng += 6.161; // Declinación 7 grados este
 				// Correct for headinng < 0deg and headinng > 360deg
 				if (headinng < 0) {
@@ -318,7 +316,6 @@ void ble_task(void *pvParameter)
 				if (headinng > 360) {
 					headinng -= 360;
 				}
-				printf("%f\n", headinng);
 				display_heading(headinng,0);
 				break;
 			case 1:
